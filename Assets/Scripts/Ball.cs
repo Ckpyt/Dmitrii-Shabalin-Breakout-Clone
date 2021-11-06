@@ -5,8 +5,8 @@ using UnityEngine;
 public class Ball : MonoBehaviour
 {
     //start speed of the ball
-    public const float speed = 4;
-    public const float minimalSpeed = 0.2f;
+    const float speed = 4;
+    const float minimalSpeed = 0.2f;
 
     bool m_launched = false;
 
@@ -15,7 +15,7 @@ public class Ball : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-     
+        Camera.main.GetComponent<Game>().OnRestart += Restart;
     }
 
     /// <summary>
@@ -29,6 +29,12 @@ public class Ball : MonoBehaviour
             GetComponent<Rigidbody>().velocity = new Vector2(speed * Mathf.Cos(direction), speed * Mathf.Sin(direction));
         }
         m_launched = true;
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.name != "Bottom") return;
+        Restart();
     }
 
     //if a ball fall of or the game restarted

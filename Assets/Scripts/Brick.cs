@@ -7,6 +7,8 @@ public class Brick : MonoBehaviour
 {
     const string prefabPath = "Assets/Prefabs/Brick.prefab";
     const string brickName = "Brick";
+
+    #region BrickGenereator constants
     const float height = 0.5f;
     const int brickScore = 100;
     const int maxLayers = 5;
@@ -18,11 +20,12 @@ public class Brick : MonoBehaviour
     const float layerWidth = rightPos - leftPos;
     const int bricksPerLayer = 10;
     const float brickDistance = 0.05f;
+    #endregion
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        Camera.main.GetComponent<Game>().OnRestart += Restart;
     }
 
     static float maxBrickWidth(float xPos, int currentBrik)
@@ -61,13 +64,20 @@ public class Brick : MonoBehaviour
         brick.name = brickName;
     }
 
+    void Restart()
+    {
+        Destroy(gameObject);
+    }
+
     void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.name != "Ball") return;
         Paddle.AddScores(brickScore);
+
         //restart the game, if there is no bricks
-        if(FindObjectsOfType(typeof( Brick)).Length <= 1) 
-            PlaceBricksRandom();
+        if (FindObjectsOfType(typeof(Brick)).Length <= 1)
+            Camera.main.GetComponent<Game>().Restart();
+
         Destroy(gameObject);
     }
 
@@ -75,5 +85,17 @@ public class Brick : MonoBehaviour
     void Update()
     {
         
+    }
+
+    void OnDestroy()
+    {
+        try
+        {
+            Camera.main.GetComponent<Game>().OnRestart -= Restart;
+        }
+        catch (System.NullReferenceException) //happens then the game closed or restarted by Unity
+        { 
+        }
+
     }
 }

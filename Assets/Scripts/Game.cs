@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class Game : MonoBehaviour
 {
-
+    public delegate void RestartEvent();
+    public RestartEvent OnRestart;
 
     // Start is called before the first frame update
     void Start()
@@ -12,6 +13,11 @@ public class Game : MonoBehaviour
         Brick.PlaceBricksRandom();
     }
 
+    public void Restart()
+    {
+        OnRestart?.Invoke();
+        Brick.PlaceBricksRandom();
+    }
 
 
     // Update is called once per frame

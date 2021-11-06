@@ -17,9 +17,19 @@ public class Paddle : MonoBehaviour
      // Start is called before the first frame update
     void Start()
     {
-        paddleYcoord = transform.position.y;   
+        paddleYcoord = transform.position.y;
+        Camera.main.GetComponent<Game>().OnRestart += Restart;
     }
 
+
+    void Restart()
+    {
+        Vector3 pos = transform.position;
+        pos.y = paddleYcoord;
+        pos.x = 0;
+
+        transform.position = pos;
+    }
 
     public static void AddScores(int Scores)
     {
@@ -32,7 +42,8 @@ public class Paddle : MonoBehaviour
     {
         float curSpeed = 0;
         var pos = transform.position;
-        if (Input.GetKeyDown(KeyCode.Space)) m_ball.Launch();
+        if (Input.GetKeyDown(KeyCode.Space)) 
+            m_ball.Launch();
 
 
         if (pos.x > -xBorder && Input.GetKey(KeyCode.A)) curSpeed = -speed;

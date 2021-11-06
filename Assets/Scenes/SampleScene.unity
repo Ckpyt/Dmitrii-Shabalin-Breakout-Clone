@@ -351,9 +351,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: Ball, Assembly-CSharp
-        m_MethodName: Launch
+      - m_Target: {fileID: 519420033}
+        m_TargetAssemblyTypeName: Game, Assembly-CSharp
+        m_MethodName: Restart
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -870,6 +870,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 793110832}
   m_CullTransparentMesh: 1
+--- !u!114 &809510147 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 801442683225289679, guid: 8f327ed4999427f4ea6c2911b2e016ed, type: 3}
+  m_PrefabInstance: {fileID: 801442684026394316}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33e3754d1616d634294b661e19df36d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &867514856
 GameObject:
   m_ObjectHideFlags: 0
@@ -1419,6 +1430,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Ball
       objectReference: {fileID: 0}
+    - target: {fileID: 801442683225289266, guid: 8f327ed4999427f4ea6c2911b2e016ed, type: 3}
+      propertyPath: m_CollisionDetection
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 801442683225289267, guid: 8f327ed4999427f4ea6c2911b2e016ed, type: 3}
       propertyPath: m_Radius
       value: 0.1
@@ -1471,6 +1486,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 801442683225289679, guid: 8f327ed4999427f4ea6c2911b2e016ed, type: 3}
+      propertyPath: paddle
+      value: 
+      objectReference: {fileID: 8035729833665055579}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8f327ed4999427f4ea6c2911b2e016ed, type: 3}
 --- !u!1001 &8035729833665055577
@@ -1547,6 +1566,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a117e09091d8044baade623190bac30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_ball: {fileID: 809510147}
+  paddleYcoord: 0
 --- !u!54 &8035729833665055580
 Rigidbody:
   m_ObjectHideFlags: 0
