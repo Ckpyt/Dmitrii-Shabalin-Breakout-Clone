@@ -59,6 +59,7 @@
     <Compile Include="Assets\Scripts\Game.cs" />
     <Compile Include="Assets\Scripts\DefinedColors.cs" />
     <Compile Include="Assets\Scripts\Paddle.cs" />
+    <Compile Include="Assets\Scripts\BallFall.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

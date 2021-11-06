@@ -15,7 +15,7 @@ public class Ball : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Launch();
+     
     }
 
     /// <summary>
@@ -31,6 +31,7 @@ public class Ball : MonoBehaviour
         m_launched = true;
     }
 
+    //if a ball fall of or the game restarted
     public void Restart()
     {
         m_launched = false;
@@ -47,9 +48,20 @@ public class Ball : MonoBehaviour
             
             if (vel.x > -minimalSpeed && vel.x < minimalSpeed) vel.x = pos.x < 0 ? minimalSpeed : -minimalSpeed;
             if (vel.y > -minimalSpeed && vel.y < minimalSpeed) vel.y = pos.y < 0 ? minimalSpeed : -minimalSpeed;
+
             //fixing flying in the Z coord;
-            if (vel.z != 0) vel.z = 0;
+            if (vel.z != 0) { 
+                vel.z = 0;
+            }
             if (pos.z != 0) pos.z = 0;
+            
+            //fixing loosing speed on the z direction
+            if(vel.magnitude < speed - 0.1f || vel.magnitude > speed + 0.1f)
+            {
+                float mag = vel.magnitude;
+                vel.x = speed * vel.x / mag;
+                vel.y = speed * vel.y / mag;
+            }
 
             GetComponent<Rigidbody>().velocity = vel;
         }

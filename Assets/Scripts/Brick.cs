@@ -6,6 +6,7 @@ using UnityEngine;
 public class Brick : MonoBehaviour
 {
     const string prefabPath = "Assets/Prefabs/Brick.prefab";
+    const string brickName = "Brick";
     const float height = 0.5f;
     const int brickScore = 100;
     const int maxLayers = 5;
@@ -57,12 +58,16 @@ public class Brick : MonoBehaviour
         GameObject brick = Instantiate(prefab, position, Quaternion.identity) as GameObject;
         brick.transform.localScale = new Vector3(width, height, 1);
         brick.GetComponent<MeshRenderer>().material.color = color;
+        brick.name = brickName;
     }
 
     void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.name != "Ball") return;
-        Camera.main.GetComponent<PlayerCamera>().SetScore(brickScore);
+        Paddle.AddScores(brickScore);
+        //restart the game, if there is no bricks
+        if(FindObjectsOfType(typeof( Brick)).Length <= 1) 
+            PlaceBricksRandom();
         Destroy(gameObject);
     }
 

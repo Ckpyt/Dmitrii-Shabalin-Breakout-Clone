@@ -10,10 +10,21 @@ public class Paddle : MonoBehaviour
 
     public float paddleYcoord;
 
+    static int m_scores = 0;
+
+    public static float Scores { get { return m_scores; } }
+
      // Start is called before the first frame update
     void Start()
     {
         paddleYcoord = transform.position.y;   
+    }
+
+
+    public static void AddScores(int Scores)
+    {
+        m_scores += Scores;
+        Camera.main.GetComponent<PlayerCamera>().SetScore(m_scores);
     }
 
     // Update is called once per frame
