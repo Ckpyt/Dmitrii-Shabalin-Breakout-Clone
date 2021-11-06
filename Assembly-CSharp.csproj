@@ -58,6 +58,7 @@
     <Compile Include="Assets\Scripts\Brick.cs" />
     <Compile Include="Assets\Scripts\Game.cs" />
     <Compile Include="Assets\Scripts\DefinedColors.cs" />
+    <Compile Include="Assets\Scripts\Paddle.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
