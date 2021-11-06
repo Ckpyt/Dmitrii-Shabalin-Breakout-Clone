@@ -6,7 +6,7 @@ public class Ball : MonoBehaviour
 {
     //start speed of the ball
     public const float speed = 4;
-
+    public const float minimalSpeed = 0.2f;
 
     // Start is called before the first frame update
     void Start()
@@ -26,6 +26,10 @@ public class Ball : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        //fixing flying horizontal or vertical
+        var vel = GetComponent<Rigidbody2D>().velocity;
+        if (vel.x > -minimalSpeed && vel.x < minimalSpeed) vel.x *= 2;
+        if (vel.y > -minimalSpeed && vel.y < minimalSpeed) vel.y *= 2;
+        GetComponent<Rigidbody2D>().velocity = vel;
     }
 }
