@@ -20,16 +20,24 @@ public class Ball : MonoBehaviour
     public void Launch()
     {
         float direction = ((Random.value * 90) + 45) / 180 * Mathf.PI;
-        GetComponent<Rigidbody2D>().velocity = new Vector2(speed * Mathf.Cos(direction), speed * Mathf.Sin(direction));
+        GetComponent<Rigidbody>().velocity = new Vector2(speed * Mathf.Cos(direction), speed * Mathf.Sin(direction));
     }
 
     // Update is called once per frame
     void Update()
     {
         //fixing flying horizontal or vertical
-        var vel = GetComponent<Rigidbody2D>().velocity;
-        if (vel.x > -minimalSpeed && vel.x < minimalSpeed) vel.x *= 2;
-        if (vel.y > -minimalSpeed && vel.y < minimalSpeed) vel.y *= 2;
-        GetComponent<Rigidbody2D>().velocity = vel;
+        var vel = GetComponent<Rigidbody>().velocity;
+        var pos = transform.position;
+        if (vel.x > -minimalSpeed && vel.x < minimalSpeed) vel.x = pos.x < 0 ? minimalSpeed: -minimalSpeed;
+        if (vel.y > -minimalSpeed && vel.y < minimalSpeed) vel.y = pos.y < 0 ? minimalSpeed: -minimalSpeed;
+        //fixing flying in the Z coord;
+        if (vel.z != 0) vel.z = 0;
+
+        
+        if (pos.z != 0) pos.z = 0;
+
+        GetComponent<Rigidbody>().velocity = vel;
+        transform.position = pos;
     }
 }

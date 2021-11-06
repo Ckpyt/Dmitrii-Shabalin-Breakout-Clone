@@ -55,11 +55,11 @@ public class Brick : MonoBehaviour
     {
         Object prefab = AssetDatabase.LoadAssetAtPath(prefabPath, typeof(GameObject));
         GameObject brick = Instantiate(prefab, position, Quaternion.identity) as GameObject;
-        brick.transform.localScale = new Vector3(width, height);
-        brick.GetComponent<SpriteRenderer>().color = color;
+        brick.transform.localScale = new Vector3(width, height, 1);
+        brick.GetComponent<MeshRenderer>().material.color = color;
     }
 
-    void OnCollisionEnter2D(Collision2D collision)
+    void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.name != "Ball") return;
         Camera.main.GetComponent<PlayerCamera>().SetScore(brickScore);
