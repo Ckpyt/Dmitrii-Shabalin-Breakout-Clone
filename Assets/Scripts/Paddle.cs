@@ -35,11 +35,11 @@ namespace Breakout
             if (isServer)
             {
                 m_ball = Ball.CreateBallForPlayer(this);
+                m_ball.GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
 
             }
             else
             {
-                
             }
         }
 
@@ -62,7 +62,12 @@ namespace Breakout
 
         void LaunchBall()
         {
-            m_ball?.Launch();
+            if (m_ball != null)
+            {
+                //m_ball.GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+                m_ball.Launch();
+
+            }
         }
 
         void CheckMovement()
@@ -124,7 +129,7 @@ namespace Breakout
                         if (ball.transform.position.y + 0.5 > transform.position.y && ball.transform.position.y - 0.5 < transform.position.y)
                             m_ball = ball;
 
-                    m_ball.GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+                    //m_ball.GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
                 }
             }
 
