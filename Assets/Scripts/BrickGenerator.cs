@@ -91,8 +91,11 @@ namespace Breakout
         /// </summary>
         static GameObject CreateBrick(Color color, Vector2 position, float width)
         {
+            
             UnityEngine.Object prefab = AssetDatabase.LoadAssetAtPath(prefabPath, typeof(GameObject));
             GameObject brick = GameObject.Instantiate(prefab, position, Quaternion.identity) as GameObject;
+
+
             brick.transform.localScale = new Vector3(width, height, 1);
             brick.GetComponent<MeshRenderer>().material.color = color;
             brick.name = brickName;
@@ -100,25 +103,30 @@ namespace Breakout
         }
 
 
-        public static void LoadFromJson(string filename)
+        public static void LoadFromFile(string filename)
+        {
+            LoadFromString(  File.ReadAllText(filename));
+        }
+
+        public static void LoadFromString(string json)
         {
             var allBricks = GameObject.FindObjectsOfType<Breakout.Brick>();
             foreach (var brick in allBricks)
                 GameObject.Destroy(brick.gameObject);
 
-            var level = JsonUtility.FromJson<Level>(File.ReadAllText(filename));
+            var level = JsonUtility.FromJson<Level>(json);
             foreach (var layer in level.layers)
                 foreach (var brick in layer.bricks)
                     CreateBrick(layer.color, new Vector2(brick.positionX, brick.positionY), brick.width);
         }
 
-        public static void SaveToJson(string filename)
+        public static string SceneToJson()
         {
             Level lvl = new Level();
             var allBricks = GameObject.FindObjectsOfType<Breakout.Brick>();
             List<Breakout.Brick> layers = new List<Breakout.Brick>();
 
-            foreach(var brick in allBricks)
+            foreach (var brick in allBricks)
             {
                 bool check = true;
                 foreach (var layer in layers)
@@ -130,11 +138,12 @@ namespace Breakout
             lvl.layers = new Layer[lvl.layersCount];
             List<Breakout.Brick>[] briksByLayers = new List<Breakout.Brick>[lvl.layersCount];
 
-            for(int i = 0; i < lvl.layersCount; i++)
+            for (int i = 0; i < lvl.layersCount; i++)
                 briksByLayers[i] = new List<Breakout.Brick>();
 
             foreach (var brick in allBricks)
-                for (int i = 0; i < lvl.layersCount; i++) {
+                for (int i = 0; i < lvl.layersCount; i++)
+                {
                     var layer = layers[i];
                     if (brick.transform.position.y + 0.1f > layer.transform.position.y && brick.transform.position.y - 0.1f < layer.transform.position.y)
                     {
@@ -143,7 +152,7 @@ namespace Breakout
                     }
                 }
 
-            for(int i = 0; i < lvl.layersCount; i++)
+            for (int i = 0; i < lvl.layersCount; i++)
             {
                 lvl.layers[i] = new Layer();
                 var layer = briksByLayers[i];
@@ -151,7 +160,7 @@ namespace Breakout
                 jsonLayer.color = layer[0].GetComponent<MeshRenderer>().material.color;
                 jsonLayer.height = layer[0].transform.localScale.y;
                 jsonLayer.bricks = new Brick[layer.Count];
-                for(int ix = 0; ix < layer.Count; ix++)
+                for (int ix = 0; ix < layer.Count; ix++)
                 {
                     jsonLayer.bricks[ix] = new Brick();
                     var brick = layer[ix];
@@ -161,8 +170,12 @@ namespace Breakout
                     jsonBrick.width = brick.transform.localScale.x;
                 }
             }
+            return JsonUtility.ToJson(lvl);
+        }
 
-            File.WriteAllText(filename, JsonUtility.ToJson(lvl));
+        public static void SaveToJson(string filename)
+        {
+            File.WriteAllText(filename, SceneToJson());
         }
 
     }

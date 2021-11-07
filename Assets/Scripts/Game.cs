@@ -1,12 +1,19 @@
+using Mirror;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Breakout{
-    public class Game : MonoBehaviour
+    public class Game : NetworkBehaviour
     {
         public delegate void RestartEvent();
         public RestartEvent OnRestart;
+
+        [SyncVar]
+        int m_scores = 0;
+
+        [SyncVar]
+        string sceneJson;
 
         #region DebugButtons
         public GameObject SaveButton;
@@ -19,13 +26,22 @@ namespace Breakout{
         // Start is called before the first frame update
         void Start()
         {
-            BrickGenerator.PlaceBricksRandom();
+            if (isServer)
+            {
+                BrickGenerator.PlaceBricksRandom();
+                //sceneJson = BrickGenerator.SceneToJson();
+            }
+            else
+            {
+                //BrickGenerator.LoadFromString(sceneJson);
+            }
 
 #if DEBUG
             SaveButton.SetActive(true);
             LoadButton.SetActive(true);
             RestartButton.SetActive(true);
 #endif
+
         }
 
         public void Restart()
@@ -36,7 +52,16 @@ namespace Breakout{
 
         public void LoadLevelFromJson()
         {
-            BrickGenerator.LoadFromJson(JsonFileName);
+            BrickGenerator.LoadFromFile(JsonFileName);
+        }
+
+        public void AddScores(int Scores)
+        {
+            if (isServer)
+            {
+                m_scores += Scores;
+                Camera.main.GetComponent<PlayerCamera>().SetScore(m_scores);
+            }
         }
 
         public void SaveLevelToJson()

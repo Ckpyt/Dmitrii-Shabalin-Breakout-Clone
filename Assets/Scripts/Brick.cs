@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
@@ -27,7 +28,7 @@ namespace Breakout
         {
             if (collision.gameObject.name != Ball.ballName || collision.gameObject.GetComponent<Ball>()?.IsLaunched == false) return;
 
-            Paddle.AddScores(brickScore);
+            Camera.main.GetComponent<Game>().AddScores(brickScore);
             //restart the game, if there is no bricks
             if (FindObjectsOfType(typeof(Brick)).Length <= 1)
                 Camera.main.GetComponent<Game>().Restart();
@@ -47,8 +48,9 @@ namespace Breakout
             {
                 Camera.main.GetComponent<Game>().OnRestart -= Restart;
             }
-            catch (System.NullReferenceException) //happens then the game closed or restarted by Unity
+            catch (NullReferenceException) //happens when the game closed or restarted by Unity
             {
+                Debug.Log("NullReferenceException");
             }
 
         }

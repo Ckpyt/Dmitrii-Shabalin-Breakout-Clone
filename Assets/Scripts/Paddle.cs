@@ -1,10 +1,12 @@
+using Mirror;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Breakout
 {
-    public class Paddle : MonoBehaviour
+    public class Paddle : NetworkBehaviour
     {
         public Ball m_ball;
         const float speed = 5;
@@ -12,11 +14,15 @@ namespace Breakout
 
         public float paddleYcoord;
 
-        static int m_scores = 0;
+        [SyncVar]
+        int m_scores = 0;
 
+        [SyncVar]
+        Vector2 position;
+        [SyncVar]
+        Vector2 velocity;
 
-
-        public static float Scores { get { return m_scores; } }
+        public float Scores { get { return m_scores; } }
 
         // Start is called before the first frame update
         void Start()
@@ -25,8 +31,10 @@ namespace Breakout
             pos.y = -4;
             paddleYcoord = transform.position.y;
             Camera.main.GetComponent<Game>().OnRestart += Restart;
-
-            m_ball = Ball.CreateBallForPlayer(this);
+            if (isServer)
+            {
+                m_ball = Ball.CreateBallForPlayer(this);
+            }
         }
 
 
@@ -39,10 +47,11 @@ namespace Breakout
             transform.position = pos;
         }
 
-        public static void AddScores(int Scores)
+        [Command]
+        void ChangePosition(Vector2 pos, Vector3 vel)
         {
-            m_scores += Scores;
-            Camera.main.GetComponent<PlayerCamera>().SetScore(m_scores);
+            position = pos;
+            velocity = vel;
         }
 
         void CheckMovement()
@@ -55,8 +64,10 @@ namespace Breakout
 
             if (pos.x > -xBorder && Input.GetKey(KeyCode.A)) curSpeed = -speed;
             if (pos.x < xBorder && Input.GetKey(KeyCode.D)) curSpeed = speed;
+            var vel = new Vector3(curSpeed, 0);
+            GetComponent<Rigidbody>().velocity = vel;
 
-            GetComponent<Rigidbody>().velocity = new Vector3(curSpeed, 0);
+            ChangePosition(pos, vel);
         }
 
         void FixMovementAndRotation()
@@ -71,11 +82,34 @@ namespace Breakout
             transform.position = pos;
         }
 
+        //for disconnecting the player issue
+        private void OnDestroy()
+        {
+            try
+            {
+                Destroy(m_ball.gameObject);
+            }
+            catch (NullReferenceException) //normal behaviour when the game has closed by Unity
+            {
+                Debug.Log("NullReferenceException");
+            }
+        }
+
         // Update is called once per frame
         void Update()
         {
-            CheckMovement();
+            if (isLocalPlayer)
+            {
+                CheckMovement();
+            }
+            else
+            {
+                transform.position = position;
+                GetComponent<Rigidbody>().velocity = velocity;
+            }
+
             FixMovementAndRotation();
+            
         }
     }
 }

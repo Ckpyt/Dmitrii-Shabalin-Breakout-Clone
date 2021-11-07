@@ -1,3 +1,4 @@
+using Mirror;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -28,10 +29,10 @@ namespace Breakout
         /// For multiplayer client only.
         /// </summary>
         /// <param name="ping"></param>
-        public void SetPing(int ping)
+        public void SetPing()
         {
             m_playerPing.SetActive(true);
-            m_playerPingValue.GetComponent<Text>().text = ping.ToString() + " ms";
+            m_playerPingValue.GetComponent<Text>().text = NetworkTime.rtt.ToString() + " ms";
         }
 #endif
 
@@ -39,6 +40,7 @@ namespace Breakout
         void Update()
         {
 
+            SetPing();
         }
     }
 }

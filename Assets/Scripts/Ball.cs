@@ -1,3 +1,4 @@
+using Mirror;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
@@ -5,7 +6,7 @@ using UnityEngine;
 
 namespace Breakout
 {
-    public class Ball : MonoBehaviour
+    public class Ball : NetworkBehaviour
     {
         public const string ballName = "Ball";
         //start speed of the ball
@@ -18,6 +19,11 @@ namespace Breakout
         public bool IsLaunched { get { return m_launched; } }
 
         const string ballPrefabPath = "Assets/Prefabs/Ball.prefab";
+
+        [SyncVar]
+        Vector3 position;
+        [SyncVar]
+        Vector3 velocity;
 
         // Start is called before the first frame update
         void Start()
@@ -53,49 +59,69 @@ namespace Breakout
 
         public static Ball CreateBallForPlayer(Paddle player)
         {
-            Object prefab = AssetDatabase.LoadAssetAtPath(ballPrefabPath, typeof(GameObject));
-            var ballObj = Instantiate(prefab, Vector2.zero, Quaternion.identity) as GameObject;
-            Ball ball = ballObj.GetComponent<Ball>();
-            ball.paddle = player;
-            return ball;
+
+                GameObject prefab = AssetDatabase.LoadAssetAtPath(ballPrefabPath, typeof(GameObject)) as GameObject;
+                NetworkClient.RegisterPrefab(prefab);
+
+                var ballObj = Instantiate(prefab, Vector2.zero, Quaternion.identity) as GameObject;
+                Ball ball = ballObj.GetComponent<Ball>();
+                ball.paddle = player;
+                NetworkServer.Spawn(ballObj);
+                return ball;
+
         }
+
+        void FixingMovement()
+        {
+            position = transform.position;
+            if (m_launched)
+            {
+                //fixing flying horizontal or vertical
+                velocity = GetComponent<Rigidbody>().velocity;
+
+                if (velocity.x > -minimalSpeed && velocity.x < minimalSpeed) velocity.x = position.x < 0 ? minimalSpeed : -minimalSpeed;
+                if (velocity.y > -minimalSpeed && velocity.y < minimalSpeed) velocity.y = position.y < 0 ? minimalSpeed : -minimalSpeed;
+
+                //fixing flying in the Z coord;
+                if (velocity.z != 0)
+                {
+                    velocity.z = 0;
+                }
+                position.z = 0;
+
+                //fixing loosing speed on the z direction
+                if (velocity.magnitude < speed - 0.1f || velocity.magnitude > speed + 0.1f)
+                {
+                    float mag = velocity.magnitude;
+                    velocity.x = speed * velocity.x / mag;
+                    velocity.y = speed * velocity.y / mag;
+                }
+
+                GetComponent<Rigidbody>().velocity = velocity;
+            }
+            else
+            {
+                position = paddle.transform.position;
+                position.y += 0.2f;
+            }
+
+            transform.position = position;
+        }
+
 
         // Update is called once per frame
         void Update()
         {
-            var pos = transform.position;
-            if (m_launched)
+            if (isServer)
             {
-                //fixing flying horizontal or vertical
-                var vel = GetComponent<Rigidbody>().velocity;
-
-                if (vel.x > -minimalSpeed && vel.x < minimalSpeed) vel.x = pos.x < 0 ? minimalSpeed : -minimalSpeed;
-                if (vel.y > -minimalSpeed && vel.y < minimalSpeed) vel.y = pos.y < 0 ? minimalSpeed : -minimalSpeed;
-
-                //fixing flying in the Z coord;
-                if (vel.z != 0)
-                {
-                    vel.z = 0;
-                }
-                if (pos.z != 0) pos.z = 0;
-
-                //fixing loosing speed on the z direction
-                if (vel.magnitude < speed - 0.1f || vel.magnitude > speed + 0.1f)
-                {
-                    float mag = vel.magnitude;
-                    vel.x = speed * vel.x / mag;
-                    vel.y = speed * vel.y / mag;
-                }
-
-                GetComponent<Rigidbody>().velocity = vel;
+                FixingMovement();
             }
             else
             {
-                pos = paddle.transform.position;
-                pos.y += 0.2f;
+                transform.position = position;
+                GetComponent<Rigidbody>().velocity = velocity;
             }
-
-            transform.position = pos;
         }
-    }
+    }        
+    
 }
