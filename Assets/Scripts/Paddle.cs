@@ -8,6 +8,7 @@ namespace Breakout
 {
     public class Paddle : NetworkBehaviour
     {
+        [SyncVar]
         public Ball m_ball;
         const float speed = 5;
         const float xBorder = 5.7f;
@@ -34,6 +35,11 @@ namespace Breakout
             if (isServer)
             {
                 m_ball = Ball.CreateBallForPlayer(this);
+
+            }
+            else
+            {
+                
             }
         }
 
@@ -54,13 +60,18 @@ namespace Breakout
             velocity = vel;
         }
 
+        void LaunchBall()
+        {
+            m_ball?.Launch();
+        }
+
         void CheckMovement()
         {
             float curSpeed = 0;
             var pos = transform.position;
 
             if (Input.GetKeyDown(KeyCode.Space))
-                m_ball?.Launch();
+                LaunchBall();
 
             if (pos.x > -xBorder && Input.GetKey(KeyCode.A)) curSpeed = -speed;
             if (pos.x < xBorder && Input.GetKey(KeyCode.D)) curSpeed = speed;
@@ -106,6 +117,15 @@ namespace Breakout
             {
                 transform.position = position;
                 GetComponent<Rigidbody>().velocity = velocity;
+                if(m_ball == null)
+                {
+                    var balls = FindObjectsOfType<Ball>();
+                    foreach (var ball in balls)
+                        if (ball.transform.position.y + 0.5 > transform.position.y && ball.transform.position.y - 0.5 < transform.position.y)
+                            m_ball = ball;
+
+                    m_ball.GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
+                }
             }
 
             FixMovementAndRotation();

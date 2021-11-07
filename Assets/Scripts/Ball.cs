@@ -13,6 +13,7 @@ namespace Breakout
         const float speed = 4;
         const float minimalSpeed = 0.2f;
 
+        [SyncVar]
         bool m_launched = false;
 
         public Paddle paddle;
@@ -35,6 +36,7 @@ namespace Breakout
         /// <summary>
         /// launch a ball with a random direction
         /// </summary>
+        [Command]
         public void Launch()
         {
             if (!m_launched)
