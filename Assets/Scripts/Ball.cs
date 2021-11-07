@@ -63,7 +63,6 @@ namespace Breakout
         {
 
                 GameObject prefab = AssetDatabase.LoadAssetAtPath(ballPrefabPath, typeof(GameObject)) as GameObject;
-                NetworkClient.RegisterPrefab(prefab);
 
                 var ballObj = Instantiate(prefab, Vector2.zero, Quaternion.identity) as GameObject;
                 Ball ball = ballObj.GetComponent<Ball>();

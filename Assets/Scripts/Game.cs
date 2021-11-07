@@ -60,7 +60,6 @@ namespace Breakout{
             if (isServer)
             {
                 m_scores += Scores;
-                Camera.main.GetComponent<PlayerCamera>().SetScore(m_scores);
             }
         }
 
@@ -72,7 +71,7 @@ namespace Breakout{
         // Update is called once per frame
         void Update()
         {
-
+            Camera.main.GetComponent<PlayerCamera>().SetScore(m_scores);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mirror;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -99,6 +100,9 @@ namespace Breakout
             brick.transform.localScale = new Vector3(width, height, 1);
             brick.GetComponent<MeshRenderer>().material.color = color;
             brick.name = brickName;
+            brick.GetComponent<Breakout.Brick>().color = color;
+
+            NetworkServer.Spawn(brick);
             return brick;
         }
 

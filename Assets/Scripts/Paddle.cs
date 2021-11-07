@@ -60,23 +60,13 @@ namespace Breakout
             velocity = vel;
         }
 
-        void LaunchBall()
-        {
-            if (m_ball != null)
-            {
-                //m_ball.GetComponent<NetworkIdentity>().AssignClientAuthority(this.GetComponent<NetworkIdentity>().connectionToClient);
-                m_ball.Launch();
-
-            }
-        }
-
         void CheckMovement()
         {
             float curSpeed = 0;
             var pos = transform.position;
 
             if (Input.GetKeyDown(KeyCode.Space))
-                LaunchBall();
+                m_ball?.Launch();
 
             if (pos.x > -xBorder && Input.GetKey(KeyCode.A)) curSpeed = -speed;
             if (pos.x < xBorder && Input.GetKey(KeyCode.D)) curSpeed = speed;

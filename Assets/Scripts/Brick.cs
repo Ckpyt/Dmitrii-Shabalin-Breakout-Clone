@@ -1,3 +1,4 @@
+using Mirror;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,15 +7,19 @@ using UnityEngine;
 
 namespace Breakout
 {
-    public class Brick : MonoBehaviour
+    public class Brick : NetworkBehaviour
     {
 
         const int brickScore = 100;
+
+        [SyncVar]
+        public Color color;
 
         // Start is called before the first frame update
         void Start()
         {
             Camera.main.GetComponent<Game>().OnRestart += Restart;
+            GetComponent<MeshRenderer>().material.color = color;
         }
 
 
