@@ -86,6 +86,9 @@ namespace Breakout
             }
         }
 
+        /// <summary>
+        /// according by the test task, all the bricks should have the same height
+        /// </summary>
         static GameObject CreateBrick(Color color, Vector2 position, float width)
         {
             UnityEngine.Object prefab = AssetDatabase.LoadAssetAtPath(prefabPath, typeof(GameObject));

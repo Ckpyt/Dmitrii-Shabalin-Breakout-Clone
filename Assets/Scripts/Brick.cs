@@ -25,9 +25,9 @@ namespace Breakout
 
         void OnCollisionEnter(Collision collision)
         {
-            if (collision.gameObject.name != "Ball") return;
-            Paddle.AddScores(brickScore);
+            if (collision.gameObject.name != Ball.ballName || collision.gameObject.GetComponent<Ball>()?.IsLaunched == false) return;
 
+            Paddle.AddScores(brickScore);
             //restart the game, if there is no bricks
             if (FindObjectsOfType(typeof(Brick)).Length <= 1)
                 Camera.main.GetComponent<Game>().Restart();

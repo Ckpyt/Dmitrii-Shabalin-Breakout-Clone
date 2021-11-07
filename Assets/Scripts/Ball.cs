@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace Breakout
 {
     public class Ball : MonoBehaviour
     {
+        public const string ballName = "Ball";
         //start speed of the ball
         const float speed = 4;
         const float minimalSpeed = 0.2f;
@@ -13,11 +15,15 @@ namespace Breakout
         bool m_launched = false;
 
         public Paddle paddle;
+        public bool IsLaunched { get { return m_launched; } }
+
+        const string ballPrefabPath = "Assets/Prefabs/Ball.prefab";
 
         // Start is called before the first frame update
         void Start()
         {
             Camera.main.GetComponent<Game>().OnRestart += Restart;
+            gameObject.name = ballName;
         }
 
         /// <summary>
@@ -43,6 +49,15 @@ namespace Breakout
         public void Restart()
         {
             m_launched = false;
+        }
+
+        public static Ball CreateBallForPlayer(Paddle player)
+        {
+            Object prefab = AssetDatabase.LoadAssetAtPath(ballPrefabPath, typeof(GameObject));
+            var ballObj = Instantiate(prefab, Vector2.zero, Quaternion.identity) as GameObject;
+            Ball ball = ballObj.GetComponent<Ball>();
+            ball.paddle = player;
+            return ball;
         }
 
         // Update is called once per frame
