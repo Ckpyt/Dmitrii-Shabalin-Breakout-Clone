@@ -26,6 +26,10 @@ namespace Breakout
         Vector2 position;
         [SyncVar]
         Vector2 velocity;
+        // for fixing jerky movement;
+        [SyncVar]
+        float gameTime;
+
 
         public float Scores { get { return m_scores; } }
 
@@ -62,6 +66,7 @@ namespace Breakout
         {
             position = pos;
             velocity = vel;
+            gameTime = Game.CalcTime();
         }
 
         [Command]
@@ -143,8 +148,12 @@ namespace Breakout
             }
             else
             {
-                transform.position = position;
-                GetComponent<Rigidbody>().velocity = velocity;
+                float time = Game.CalcTime();
+                if (gameTime + 0.03 > time) //1 / 60fps  ~ 0.03 - should be applied exactly after received, no more then two frames in a row
+                {
+                    transform.position = position;
+                    GetComponent<Rigidbody>().velocity = velocity;
+                }
             }
 
             FixMovementAndRotation();

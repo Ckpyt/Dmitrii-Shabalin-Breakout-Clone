@@ -103,7 +103,7 @@ namespace Breakout
             if (m_launched)
             {
 
-                //fixing flying horizontal 
+                //fixing flying horizontal or vertical
                 var rig = GetComponent<Rigidbody>();
                 vel = rig.velocity;
 
@@ -115,7 +115,7 @@ namespace Breakout
 
                 if (vel.y > -minimalSpeed && vel.y < minimalSpeed)
                 {
-                    frame++;
+                    frame++;  //if a ball hits something, it could be a 1 frame issue, but the constant issue should be prevented
                     if (frame > 10)
                     {
                         vel.y = pos.y < 0 ? minimalSpeed : -minimalSpeed;
@@ -134,10 +134,7 @@ namespace Breakout
                 }
 
                 //fixing flying in the Z coord;
-                if (vel.z != 0)
-                {
-                    vel.z = 0;
-                }
+                vel.z = 0;
                 pos.z = 0;
 
                 //fixing loosing speed on the z direction
