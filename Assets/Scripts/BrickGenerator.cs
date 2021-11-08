@@ -50,7 +50,7 @@ namespace Breakout
         #region BrickGenereator constants
         const float height = 0.5f;
         const int maxLayers = 5;
-        const float bottomPos = -1;
+        const float bottomPos = 0;
         const float leftPos = -4.5f;
         const float minWidth = 0.1f;
         const float maxWidth = 1.5f;

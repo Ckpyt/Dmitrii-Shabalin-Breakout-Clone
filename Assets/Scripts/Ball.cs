@@ -45,7 +45,6 @@ namespace Breakout
         /// <summary>
         /// launch a ball with a random direction
         /// </summary>
-        [Command]
         public void Launch()
         {
             if (!m_launched)
@@ -56,6 +55,7 @@ namespace Breakout
                 startVelocity = velocity;
                 GetComponent<Rigidbody>().velocity = velocity;
                 Debug.Log("Direction:" + direction);
+                ChangePosition(transform.position, velocity);
             }
             m_launched = true;
         }

@@ -2,12 +2,14 @@ using Mirror;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace Breakout
 {
     public class Paddle : NetworkBehaviour
     {
+        const string PaddlePrefabPath = "Assets/Prefabs/Paddle.prefab";
         public static Paddle serverPlayer = null;
 
         [SyncVar]
@@ -15,6 +17,7 @@ namespace Breakout
         const float speed = 5;
         const float xBorder = 5.7f;
 
+        [SyncVar]
         public float paddleYcoord;
         [SyncVar]
         public bool IsBallLaunched = false;
@@ -36,9 +39,8 @@ namespace Breakout
         // Start is called before the first frame update
         void Start()
         {
-            var pos = transform.position;
-            pos.y = -4;
             paddleYcoord = transform.position.y;
+
             Camera.main.GetComponent<Game>().OnRestart += Restart;
             if (isServer)
             {
@@ -51,6 +53,42 @@ namespace Breakout
             }
         }
 
+        public override void OnStartServer()
+        {
+            base.OnStartServer();
+
+            var paddles = FindObjectsOfType<Paddle>();
+            int count = 0;
+            var pos = transform.position;
+
+            if (pos.y > -1)
+                pos.y = -4f;
+            transform.position = pos;
+
+            if (paddles.Length > 1) //sometimes, paddles could be in one spawn spot;
+                foreach (var paddle in paddles)
+                    if (paddle.transform.position.y + 1 > pos.y && paddle.transform.position.y - 1 < pos.y)
+                        count++;
+
+            if (count > 1)
+                pos = SwitchPlayersSpawn();
+
+            paddleYcoord = pos.y;
+        }
+
+        Vector3 SwitchPlayersSpawn()
+        {
+            var pos = transform.position;
+            if (pos.y < -3.5)
+                pos.y += 1;
+            else
+                pos.y -= 1;
+            transform.position = pos;
+
+            Debug.Log("switched");
+            ChangePosition(pos, Vector2.zero);
+            return pos;
+        }
 
         void Restart()
         {
@@ -73,6 +111,7 @@ namespace Breakout
         void LaunchBall(bool launch)
         {
             IsBallLaunched = launch;
+            m_ball.Launch();
         }
 
         void CheckMovement()
