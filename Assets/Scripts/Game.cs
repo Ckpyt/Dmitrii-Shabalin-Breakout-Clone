@@ -73,5 +73,10 @@ namespace Breakout{
         {
             Camera.main.GetComponent<PlayerCamera>().SetScore(m_scores);
         }
+
+        public static float CalcTime()
+        {
+            return (System.DateTime.Now.Second + System.DateTime.Now.Minute * 60) + (float)System.DateTime.Now.Millisecond / 1000f;
+        }
     }
 }
