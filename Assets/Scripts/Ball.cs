@@ -1,34 +1,43 @@
 using Mirror;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace Breakout
+namespace Shabalin.Breakout
 {
     public class Ball : NetworkBehaviour
     {
         public const string ballName = "Ball";
+        /// <summary> for constructing a new ball only</summary>
+        const string ballPrefabPath = "Assets/Prefabs/Ball.prefab";
+
         //start speed of the ball
         const float speed = 4;
         const float minimalSpeed = 0.2f;
 
+        /// <summary> if the ball is not launched, it is attached to the player's paddle </summary>
         [SyncVar]
         public bool m_launched = false;
 
+        /// <summary> used only for launching the ball. Fixing jerky movement  </summary>
         [SyncVar]
         Vector3 startVelocity;
 
+        /// <summary> link to player's paddle</summary>
         public Paddle paddle;
-        public bool IsLaunched { get { return m_launched; } }
 
-        const string ballPrefabPath = "Assets/Prefabs/Ball.prefab";
+        public bool isLaunched { get { return m_launched; } }
 
+        /// <summary> synchronizing position of a ball </summary>
         [SyncVar]
         Vector3 position;
+        /// <summary> synchronizing velocity of a ball </summary>
         [SyncVar]
         Vector3 velocity;
-        // for fixing jerky movement;
+
+        /// <summary> for fixing jerky movement - last time of getting a packet from the server </summary> 
         [SyncVar]
         float gameTime;
 
@@ -38,18 +47,18 @@ namespace Breakout
         // Start is called before the first frame update
         void Start()
         {
-            Camera.main.GetComponent<Game>().OnRestart += Restart;
+            Camera.main.GetComponent<Game>().OnRestart += OnRestart;
             gameObject.name = ballName;
         }
 
         /// <summary>
-        /// launch a ball with a random direction
+        /// launch a ball with in a random direction
         /// </summary>
         public void Launch()
         {
             if (!m_launched)
             {
-                float direction = ((Random.value * 90) + 45);
+                float direction = ((UnityEngine.Random.value * 90) + 45); //as it shown on the test task picture
                 float dir = direction / 180 * Mathf.PI;
                 velocity = new Vector3(speed * Mathf.Cos(dir), speed * Mathf.Sin(dir));
                 startVelocity = velocity;
@@ -60,33 +69,43 @@ namespace Breakout
             m_launched = true;
         }
 
+        /// <summary> detecting touching the bottom wall </summary>
+        /// <param name="collision"></param>
         void OnCollisionEnter(Collision collision)
         {
             if (collision.gameObject.name != "Bottom") return;
-            Restart();
+            OnRestart(this, null);
         }
 
-        //if a ball fall of or the game restarted
-        public void Restart()
+        /// <summary> if a ball fall of or the game restarted, the ball should be attached to the player's paddle</summary>
+        public void OnRestart(System.Object sender, EventArgs e)
         {
-            if(paddle != null)
-                paddle.IsBallLaunched = false;
+            if (paddle != null)
+                paddle.RestartBall();
             m_launched = false;
+            
         }
 
+        /// <summary>
+        /// Crating a ball for a player. Should works on the same client, where the player is
+        /// </summary>
+        /// <param name="player">player, who owns the ball</param>
+        /// <returns>created ball</returns>
         public static Ball CreateBallForPlayer(Paddle player)
         {
-
             GameObject prefab = AssetDatabase.LoadAssetAtPath(ballPrefabPath, typeof(GameObject)) as GameObject;
-
             var ballObj = Instantiate(prefab, Vector2.zero, Quaternion.identity) as GameObject;
             Ball ball = ballObj.GetComponent<Ball>();
+
             ball.paddle = player;
             NetworkServer.Spawn(ballObj);
             return ball;
 
         }
 
+        /// <summary>
+        /// Synchronizing position and velocity between clients and server
+        /// </summary>
         [Command]
         void ChangePosition(Vector3 pos, Vector3 vel)
         {
@@ -95,7 +114,11 @@ namespace Breakout
             gameTime = Game.CalcTime();
         }
 
-        
+        /// <summary>
+        /// It is a 2d game in the 3d world. 
+        /// So, the ball should not to flay in the Z direction
+        /// Also, prevent infinitive loops: flying straight vertical or horizontal
+        /// </summary>
         void FixingMovement()
         {
             Vector3 pos = transform.position;
@@ -137,7 +160,7 @@ namespace Breakout
                 vel.z = 0;
                 pos.z = 0;
 
-                //fixing loosing speed on the z direction
+                //fixing loosing/increasing speed (by hits, z direction and so on)
                 if (vel.magnitude < speed - 0.1f || vel.magnitude > speed + 0.1f)
                 {
                     frame++;
@@ -158,6 +181,9 @@ namespace Breakout
             ChangePosition(pos, vel);
         }
 
+        /// <summary>
+        /// Looking for the nearest paddle. Works on clients without owner
+        /// </summary>
         void LinkToPaddle()
         {
             if (paddle == null)
@@ -173,6 +199,9 @@ namespace Breakout
             }
         }
 
+        /// <summary>
+        /// Holding position a little bit higher then the player's paddle
+        /// </summary>
         void StickToPaddle()
         {
             var pos = paddle.transform.position;
@@ -180,6 +209,10 @@ namespace Breakout
             transform.position = pos;
         }
 
+        /// <summary>
+        /// changing authority to the player on the client. 
+        /// For working commands
+        /// </summary>
         void ChangeAutority()
         {
             var network = GetComponent<NetworkIdentity>();
@@ -195,7 +228,7 @@ namespace Breakout
 
             if (isServer && paddle.isServer)
             {
-                m_launched = paddle.IsBallLaunched;
+                m_launched = paddle.isBallLaunched;
                 var network = GetComponent<NetworkIdentity>();
                 if (network.connectionToClient != Paddle.serverPlayer.GetComponent<NetworkIdentity>().connectionToClient)
                 {
@@ -203,7 +236,7 @@ namespace Breakout
                 }
                 else
                 {
-                    if (IsLaunched)
+                    if (isLaunched)
                         FixingMovement();
                     else
                     {
@@ -214,7 +247,7 @@ namespace Breakout
             }
             else
             {
-                if (IsLaunched || paddle == null)
+                if (isLaunched || paddle == null)
                 {
                     float time = Game.CalcTime();
                     if (gameTime + 0.03 > time) //1 / 60fps  ~ 0.03 - should be applied exactly after received, no more then two frames in a row

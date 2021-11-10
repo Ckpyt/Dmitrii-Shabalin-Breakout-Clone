@@ -4,14 +4,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Breakout
+namespace Shabalin.Breakout
 {
     public class PlayerCamera : MonoBehaviour
     {
         //Text fields for filling
-        public GameObject m_playerScore;
-        public GameObject m_playerPing;
-        public GameObject m_playerPingValue;
+        public GameObject playerScore;
+        public GameObject playerPingValue;
+        // For making active, if necessary
+        public GameObject playerPing; 
 
         // Start is called before the first frame update
         void Start()
@@ -19,28 +20,27 @@ namespace Breakout
 
         }
 
-        public void SetScore(int score)
+        public void DispalayScore(int score)
         {
-            m_playerScore.GetComponent<Text>().text = score.ToString();
+            playerScore.GetComponent<Text>().text = score.ToString();
         }
 
 #if DEBUG
         /// <summary>
-        /// For multiplayer client only.
+        /// For debugging multiplayer client only.
         /// </summary>
-        /// <param name="ping"></param>
         public void SetPing()
         {
-            m_playerPing.SetActive(true);
-            m_playerPingValue.GetComponent<Text>().text = NetworkTime.rtt.ToString() + " ms";
+            playerPing.SetActive(true);
+            playerPingValue.GetComponent<Text>().text = NetworkTime.rtt.ToString() + " ms";
         }
-#endif
+
 
         // Update is called once per frame
         void Update()
         {
-
             SetPing();
         }
+#endif
     }
 }

@@ -10,7 +10,7 @@ using UnityEngine;
 
 
 
-namespace Breakout
+namespace Shabalin.Breakout
 {
     //static class for loading/saving/generating level. 
     static class BrickGenerator
@@ -18,8 +18,8 @@ namespace Breakout
         //classes for save/load level
         #region SaveLoadClasses
 
-        [System.Serializable]
-        class Brick
+        [Serializable]
+        class BrickSerializale
         {
             public float positionX;
             public float positionY;
@@ -27,19 +27,19 @@ namespace Breakout
 
         }
 
-        [System.Serializable]
-        class Layer
+        [Serializable]
+        class LayerSerializale
         {
             public float height;
             public Color color;
-            public Brick[] bricks;
+            public BrickSerializale[] bricks;
         }
 
-        [System.Serializable]
-        class Level
+        [Serializable]
+        class LevelSerializale
         {
             public int layersCount;
-            public Layer[] layers;
+            public LayerSerializale[] layers;
         }
 
         #endregion
@@ -48,26 +48,41 @@ namespace Breakout
         const string brickName = "Brick";
 
         #region BrickGenereator constants
+        /// <summary> all the bricks height </summary>
         const float height = 0.5f;
         const int maxLayers = 5;
-        const float bottomPos = 0;
-        const float leftPos = -4.5f;
-        const float minWidth = 0.1f;
-        const float maxWidth = 1.5f;
-        const float rightPos = 4.5f;
-        const float layerWidth = rightPos - leftPos;
+        /// <summary> lowest layer's position </summary>
+        const float bottomPosition = 0;
+        /// <summary> left layer's position </summary>
+        const float leftPosition = -4.5f;
+        /// <summary> right layer's position </summary>
+        const float rightPosition = 4.5f;
+        const float layerWidth = rightPosition - leftPosition;
         const int bricksPerLayer = 10;
+        /// <summary> minimal brick width </summary>
+        const float minWidth = 0.1f;
+        /// <summary> maximum brick width </summary>
+        const float maxWidth = 1.5f;
+        /// <summary> distance between bricks </summary>
         const float brickDistance = 0.05f;
         #endregion
 
-        static float maxBrickWidth(float xPos, int currentBrik)
+        /// <summary>
+        /// calculate the maximum width for current brick, based on his current position
+        /// </summary>
+        /// <param name="xPos">position of a brick's left border</param>
+        /// <param name="currentBrik"> number of a brick from the left to right</param>
+        static float MaxBrickWidth(float xPos, int currentBrik)
         {
-            return ((layerWidth - (xPos - leftPos))) / (bricksPerLayer - currentBrik);
+            return ((layerWidth - (xPos - leftPosition))) / (bricksPerLayer - currentBrik);
         }
 
+        /// <summary>
+        /// place all the bricks with random width
+        /// </summary>
         public static void PlaceBricksRandom()
         {
-            float yPos = bottomPos;
+            float yPos = bottomPosition;
             for (int i = 0; i < maxLayers; i++)
             {
                 LayLayerRandom(yPos, DefinedColors.GetColor((Colors)i));
@@ -75,19 +90,25 @@ namespace Breakout
             }
         }
 
+        /// <summary>
+        /// place bricks with random width in one layer
+        /// </summary>
+        /// <param name="yPosition"> layer's height </param>
+        /// <param name="color"> layer's color </param>
         static void LayLayerRandom(float yPosition, Color color)
         {
-            float xPos = leftPos;
+            float xPos = leftPosition;
             float width = 0;
             for (int i = 0; i < bricksPerLayer; i++)
             {
-                width = (minWidth + (i < bricksPerLayer - 1 ? UnityEngine.Random.value * maxWidth : 1 - minWidth)) * maxBrickWidth(xPos, i);
+                width = (minWidth + (i < bricksPerLayer - 1 ? UnityEngine.Random.value * maxWidth : 1 - minWidth)) * MaxBrickWidth(xPos, i);
                 CreateBrick(color, new Vector2(brickDistance + xPos + width / 2, yPosition), width);
                 xPos += width + brickDistance;
             }
         }
 
         /// <summary>
+        /// creating a brick with color, position and width
         /// according by the test task, all the bricks should have the same height
         /// </summary>
         static GameObject CreateBrick(Color color, Vector2 position, float width)
@@ -95,7 +116,6 @@ namespace Breakout
             
             UnityEngine.Object prefab = AssetDatabase.LoadAssetAtPath(prefabPath, typeof(GameObject));
             GameObject brick = GameObject.Instantiate(prefab, position, Quaternion.identity) as GameObject;
-
 
             brick.transform.localScale = new Vector3(width, height, 1);
             brick.GetComponent<MeshRenderer>().material.color = color;
@@ -106,29 +126,48 @@ namespace Breakout
             return brick;
         }
 
-
-        public static void LoadFromFile(string filename)
+        /// <summary>
+        /// Load all the brick from a save file
+        /// </summary>
+        public static void LoadFromFile(string fileName)
         {
-            LoadFromString(  File.ReadAllText(filename));
+            try
+            {
+                LoadFromString(File.ReadAllText(fileName));
+            }
+            catch(FileNotFoundException)
+            {
+                Debug.Log("File not found");
+            }
+            catch (Exception ex)
+            {
+                Debug.Log(ex.Message);
+            }
         }
 
+        /// <summary>
+        /// Load all the bricks from json string
+        /// </summary>
         public static void LoadFromString(string json)
         {
             var allBricks = GameObject.FindObjectsOfType<Breakout.Brick>();
             foreach (var brick in allBricks)
                 GameObject.Destroy(brick.gameObject);
 
-            var level = JsonUtility.FromJson<Level>(json);
+            var level = JsonUtility.FromJson<LevelSerializale>(json);
             foreach (var layer in level.layers)
                 foreach (var brick in layer.bricks)
                     CreateBrick(layer.color, new Vector2(brick.positionX, brick.positionY), brick.width);
         }
 
+        /// <summary>
+        /// Save all the bricks to json string
+        /// </summary>
         public static string SceneToJson()
         {
-            Level lvl = new Level();
-            var allBricks = GameObject.FindObjectsOfType<Breakout.Brick>();
-            List<Breakout.Brick> layers = new List<Breakout.Brick>();
+            LevelSerializale lvl = new LevelSerializale();
+            var allBricks = GameObject.FindObjectsOfType<Brick>();
+            List<Brick> layers = new List<Brick>();
 
             foreach (var brick in allBricks)
             {
@@ -139,11 +178,11 @@ namespace Breakout
             }
 
             lvl.layersCount = layers.Count;
-            lvl.layers = new Layer[lvl.layersCount];
-            List<Breakout.Brick>[] briksByLayers = new List<Breakout.Brick>[lvl.layersCount];
+            lvl.layers = new LayerSerializale[lvl.layersCount];
+            List<Brick>[] briksByLayers = new List<Brick>[lvl.layersCount];
 
             for (int i = 0; i < lvl.layersCount; i++)
-                briksByLayers[i] = new List<Breakout.Brick>();
+                briksByLayers[i] = new List<Brick>();
 
             foreach (var brick in allBricks)
                 for (int i = 0; i < lvl.layersCount; i++)
@@ -158,15 +197,15 @@ namespace Breakout
 
             for (int i = 0; i < lvl.layersCount; i++)
             {
-                lvl.layers[i] = new Layer();
+                lvl.layers[i] = new LayerSerializale();
                 var layer = briksByLayers[i];
                 var jsonLayer = lvl.layers[i];
                 jsonLayer.color = layer[0].GetComponent<MeshRenderer>().material.color;
                 jsonLayer.height = layer[0].transform.localScale.y;
-                jsonLayer.bricks = new Brick[layer.Count];
+                jsonLayer.bricks = new BrickSerializale[layer.Count];
                 for (int ix = 0; ix < layer.Count; ix++)
                 {
-                    jsonLayer.bricks[ix] = new Brick();
+                    jsonLayer.bricks[ix] = new BrickSerializale();
                     var brick = layer[ix];
                     var jsonBrick = jsonLayer.bricks[ix];
                     jsonBrick.positionX = brick.transform.position.x;
@@ -177,9 +216,13 @@ namespace Breakout
             return JsonUtility.ToJson(lvl);
         }
 
-        public static void SaveToJson(string filename)
+        /// <summary>
+        /// save all the brick in the save file
+        /// </summary>
+        /// <param name="fileName">path for saving</param>
+        public static void SaveToFile(string fileName)
         {
-            File.WriteAllText(filename, SceneToJson());
+            File.WriteAllText(fileName, SceneToJson());
         }
 
     }

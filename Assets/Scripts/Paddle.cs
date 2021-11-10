@@ -5,54 +5,62 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace Breakout
+namespace Shabalin.Breakout
 {
+    /// <summary>
+    /// Paddle controller. Also, player's controller.
+    /// </summary>
     public class Paddle : NetworkBehaviour
     {
+
         const string PaddlePrefabPath = "Assets/Prefabs/Paddle.prefab";
+        /// <summary> current player on the client </summary>
         public static Paddle serverPlayer = null;
 
-        [SyncVar]
-        public Ball m_ball;
+        /// <summary> the speed of a paddle </summary>
         const float speed = 5;
+
+        /// <summary> left and right wall's position </summary>
         const float xBorder = 5.7f;
 
         [SyncVar]
+        public Ball m_ball;
+
+        /// <summary> synchronized height </summary>
+        [SyncVar]
         public float paddleYcoord;
+        /// <summary> launching the player's ball synchronization </summary>
         [SyncVar]
-        public bool IsBallLaunched = false;
+        public bool isBallLaunched = false;
 
-        [SyncVar]
-        int m_scores = 0;
-
+        /// <summary> synchronized position </summary>
         [SyncVar]
         Vector2 position;
+        /// <summary> synchronized velocity </summary>
         [SyncVar]
         Vector2 velocity;
-        // for fixing jerky movement;
+        /// <summary> the last synchronization of position and velocity for fixing jerky movement </summary>
         [SyncVar]
         float gameTime;
-
-
-        public float Scores { get { return m_scores; } }
 
         // Start is called before the first frame update
         void Start()
         {
             paddleYcoord = transform.position.y;
 
-            Camera.main.GetComponent<Game>().OnRestart += Restart;
+            Camera.main.GetComponent<Game>().OnRestart += OnRestart;
+
             if (isServer)
             {
                 if(serverPlayer == null) serverPlayer = this;
                 m_ball = Ball.CreateBallForPlayer(this);
                 m_ball.paddle = this;
             }
-            else
-            {
-            }
         }
 
+        /// <summary>
+        /// Choosing a player's spawn on the server
+        /// </summary>
         public override void OnStartServer()
         {
             base.OnStartServer();
@@ -76,6 +84,9 @@ namespace Breakout
             paddleYcoord = pos.y;
         }
 
+        /// <summary>
+        /// choosing another height for a player's paddle
+        /// </summary>
         Vector3 SwitchPlayersSpawn()
         {
             var pos = transform.position;
@@ -85,12 +96,12 @@ namespace Breakout
                 pos.y -= 1;
             transform.position = pos;
 
-            Debug.Log("switched");
             ChangePosition(pos, Vector2.zero);
             return pos;
         }
 
-        void Restart()
+
+        void OnRestart(System.Object sender, EventArgs e)
         {
             Vector3 pos = transform.position;
             pos.y = paddleYcoord;
@@ -99,6 +110,9 @@ namespace Breakout
             transform.position = pos;
         }
 
+        /// <summary>
+        /// Synchronization of position and velocity
+        /// </summary>
         [Command]
         void ChangePosition(Vector2 pos, Vector2 vel)
         {
@@ -107,26 +121,35 @@ namespace Breakout
             gameTime = Game.CalcTime();
         }
 
+        /// <summary>
+        /// launching ball on the server side
+        /// </summary>
         [Command]
-        void LaunchBall(bool launch)
+        void LaunchBall()
         {
-            IsBallLaunched = launch;
+            isBallLaunched = true;
             m_ball.Launch();
         }
 
+        /// <summary>
+        /// The ball is attached to the paddle
+        /// </summary>
+        public void RestartBall()
+        {
+            isBallLaunched = false;
+        }
+
+        /// <summary>
+        /// Movement by keyboard, if the paddle within allowed area
+        /// </summary>
         void CheckMovement()
         {
             float curSpeed = 0;
             var pos = transform.position;
 
-
-
-            if (Input.GetKeyDown(KeyCode.Space) && m_ball.IsLaunched == false)
+            if (Input.GetKeyDown(KeyCode.Space) && m_ball.isLaunched == false)
             {
-                //var network = m_ball.GetComponent<NetworkIdentity>();
-                //network.RemoveClientAuthority();
-                //network.AssignClientAuthority(GetComponent<NetworkIdentity>().connectionToClient);
-                LaunchBall(true);
+                LaunchBall();
             }
 
             if (pos.x > -xBorder && Input.GetKey(KeyCode.A)) curSpeed = -speed;
@@ -137,6 +160,10 @@ namespace Breakout
             ChangePosition(pos, vel);
         }
 
+        /// <summary>
+        /// No z movement allowed.
+        /// Also, no rotation allowed
+        /// </summary>
         void FixMovementAndRotation()
         {
             //rotation does not allowed
@@ -160,8 +187,12 @@ namespace Breakout
             {
                 Debug.Log("NullReferenceException");
             }
+            catch (MissingReferenceException) { } //normal behaviour when the game has closed by Unity
         }
 
+        /// <summary>
+        /// Link to a ball while it is not a player's paddle
+        /// </summary>
         void LinkToBall()
         {
             if (m_ball == null)
@@ -194,9 +225,7 @@ namespace Breakout
                     GetComponent<Rigidbody>().velocity = velocity;
                 }
             }
-
             FixMovementAndRotation();
-            
         }
     }
 }

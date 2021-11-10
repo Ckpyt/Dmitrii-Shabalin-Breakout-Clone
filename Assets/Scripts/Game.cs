@@ -1,19 +1,19 @@
 using Mirror;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Breakout{
+namespace Shabalin.Breakout
+{
     public class Game : NetworkBehaviour
     {
-        public delegate void RestartEvent();
-        public RestartEvent OnRestart;
+        public delegate void RestartEventHandler(object sender, EventArgs e);
+        public RestartEventHandler OnRestart;
 
+        /// <summary>  Synchronized scores </summary>
         [SyncVar]
         int m_scores = 0;
-
-        [SyncVar]
-        string sceneJson;
 
         #region DebugButtons
         public GameObject SaveButton;
@@ -29,11 +29,6 @@ namespace Breakout{
             if (isServer)
             {
                 BrickGenerator.PlaceBricksRandom();
-                //sceneJson = BrickGenerator.SceneToJson();
-            }
-            else
-            {
-                //BrickGenerator.LoadFromString(sceneJson);
             }
 
 #if DEBUG
@@ -44,11 +39,15 @@ namespace Breakout{
 
         }
 
+        /// <summary>
+        /// Restart the game. Should be called on the server only
+        /// </summary>
         public void Restart()
         {
-            OnRestart?.Invoke();
+            OnRestart?.Invoke(this, null);
             BrickGenerator.PlaceBricksRandom();
         }
+
 
         public void LoadLevelFromJson()
         {
@@ -65,15 +64,18 @@ namespace Breakout{
 
         public void SaveLevelToJson()
         {
-            BrickGenerator.SaveToJson(JsonFileName);
+            BrickGenerator.SaveToFile(JsonFileName);
         }
 
         // Update is called once per frame
         void Update()
         {
-            Camera.main.GetComponent<PlayerCamera>().SetScore(m_scores);
+            Camera.main.GetComponent<PlayerCamera>().DispalayScore(m_scores);
         }
 
+        /// <summary>
+        /// Calculate time in my format for catching when the last packet income
+        /// </summary>
         public static float CalcTime()
         {
             return (System.DateTime.Now.Second + System.DateTime.Now.Minute * 60) + (float)System.DateTime.Now.Millisecond / 1000f;

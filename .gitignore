@@ -361,5 +361,10 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/Library
 /Temp
+/*cache
+/Library/Collab/Cache
+/Library/PackageCache
+/Library/ScriptAssemblies
+/Library/ShaderCache
+/Library/StateCache

@@ -5,33 +5,36 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace Breakout
+namespace Shabalin.Breakout
 {
     public class Brick : NetworkBehaviour
     {
-
+        /// <summary> scores for each brick</summary>
         const int brickScore = 100;
 
+        /// <summary> synchronization colors on all the clients </summary>
         [SyncVar]
         public Color color;
 
         // Start is called before the first frame update
         void Start()
         {
-            Camera.main.GetComponent<Game>().OnRestart += Restart;
+            Camera.main.GetComponent<Game>().OnRestart += OnRestart;
             GetComponent<MeshRenderer>().material.color = color;
         }
 
-
-
-        void Restart()
+        /// <summary> restart the game event </summary>
+        void OnRestart(System.Object sender, EventArgs e)
         {
             Destroy(gameObject);
         }
 
+        /// <summary>
+        /// Collision should react on the player's ball only
+        /// </summary>
         void OnCollisionEnter(Collision collision)
         {
-            if (collision.gameObject.name != Ball.ballName || collision.gameObject.GetComponent<Ball>()?.IsLaunched == false) return;
+            if (collision.gameObject.name != Ball.ballName || collision.gameObject.GetComponent<Ball>()?.isLaunched == false) return;
 
             Camera.main.GetComponent<Game>().AddScores(brickScore);
             //restart the game, if there is no bricks
@@ -41,17 +44,15 @@ namespace Breakout
             Destroy(gameObject);
         }
 
-        // Update is called once per frame
-        void Update()
-        {
-
-        }
-
+        /// <summary>
+        /// OnDestroy event. 
+        /// Unsubscribe from OnRestart event
+        /// </summary>
         void OnDestroy()
         {
             try
             {
-                Camera.main.GetComponent<Game>().OnRestart -= Restart;
+                Camera.main.GetComponent<Game>().OnRestart -= OnRestart;
             }
             catch (NullReferenceException) //happens when the game closed or restarted by Unity
             {
