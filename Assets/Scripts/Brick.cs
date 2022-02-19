@@ -16,10 +16,13 @@ namespace Shabalin.Breakout
         [SyncVar]
         public Color color;
 
+        Game game;
+
         // Start is called before the first frame update
         void Start()
         {
-            Camera.main.GetComponent<Game>().OnRestart += OnRestart;
+            game = Camera.main.GetComponent<Game>();
+            game.OnRestart += OnRestart;
             GetComponent<MeshRenderer>().material.color = color;
         }
 
@@ -32,15 +35,22 @@ namespace Shabalin.Breakout
         /// <summary>
         /// Collision should react on the player's ball only
         /// </summary>
+        [Server]
         void OnCollisionEnter(Collision collision)
         {
-            if (collision.gameObject.name != Ball.ballName || collision.gameObject.GetComponent<Ball>()?.isLaunched == false) return;
+            if (collision.gameObject.name != Ball.ballName || collision.gameObject.GetComponent<Ball>()?.IsLaunched == false) return;
 
-            Camera.main.GetComponent<Game>().AddScores(brickScore);
+            game.AddScores(brickScore);
             //restart the game, if there is no bricks
             if (FindObjectsOfType(typeof(Brick)).Length <= 1)
-                Camera.main.GetComponent<Game>().Restart();
+                game.Restart();
 
+            DestroyBrick();
+        }
+
+        [ClientRpc]
+        void DestroyBrick()
+        {
             Destroy(gameObject);
         }
 
@@ -52,7 +62,7 @@ namespace Shabalin.Breakout
         {
             try
             {
-                Camera.main.GetComponent<Game>().OnRestart -= OnRestart;
+                game.OnRestart -= OnRestart;
             }
             catch (NullReferenceException) //happens when the game closed or restarted by Unity
             {

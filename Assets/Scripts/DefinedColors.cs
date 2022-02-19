@@ -27,15 +27,15 @@ namespace Shabalin.Breakout
         /// </summary>
         public static Color GetColor(Colors color)
         {
-            switch (color)
+            return color switch
             {
-                case Colors.blue:   return new Color(0, 0, 1);
-                case Colors.green:  return new Color(0, 1, 0);
-                case Colors.yellow: return new Color(1, 1, 0);
-                case Colors.orange: return new Color(1, 0.5f, 1);
-                case Colors.red:    return new Color(1, 0, 0);
-            }
-            throw new Exception("Undefined color detected");
+                Colors.blue => new Color(0, 0, 1),
+                Colors.green => new Color(0, 1, 0),
+                Colors.yellow => new Color(1, 1, 0),
+                Colors.orange => new Color(1, 0.5f, 1),
+                Colors.red => new Color(1, 0, 0),
+                _ => throw new Exception("Undefined color detected"),
+            };
         }
     }
 }

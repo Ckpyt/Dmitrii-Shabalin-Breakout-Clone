@@ -44,7 +44,6 @@ namespace Shabalin.Breakout
 
         #endregion
 
-        const string prefabPath = "Assets/Prefabs/Brick.prefab";
         const string brickName = "Brick";
 
         #region BrickGenereator constants
@@ -52,30 +51,21 @@ namespace Shabalin.Breakout
         const float height = 0.5f;
         const int maxLayers = 5;
         /// <summary> lowest layer's position </summary>
-        const float bottomPosition = 0;
+        public const float bottomPosition = 0;
         /// <summary> left layer's position </summary>
         const float leftPosition = -4.5f;
         /// <summary> right layer's position </summary>
         const float rightPosition = 4.5f;
         const float layerWidth = rightPosition - leftPosition;
+        const float brickWidth = (layerWidth - brickDistance * (bricksPerLayer - 1)) / bricksPerLayer;
         const int bricksPerLayer = 10;
         /// <summary> minimal brick width </summary>
-        const float minWidth = 0.1f;
+        const float minWidth = 0.3f;
         /// <summary> maximum brick width </summary>
         const float maxWidth = 1.5f;
         /// <summary> distance between bricks </summary>
         const float brickDistance = 0.05f;
         #endregion
-
-        /// <summary>
-        /// calculate the maximum width for current brick, based on his current position
-        /// </summary>
-        /// <param name="xPos">position of a brick's left border</param>
-        /// <param name="currentBrik"> number of a brick from the left to right</param>
-        static float MaxBrickWidth(float xPos, int currentBrik)
-        {
-            return ((layerWidth - (xPos - leftPosition))) / (bricksPerLayer - currentBrik);
-        }
 
         /// <summary>
         /// place all the bricks with random width
@@ -97,13 +87,77 @@ namespace Shabalin.Breakout
         /// <param name="color"> layer's color </param>
         static void LayLayerRandom(float yPosition, Color color)
         {
-            float xPos = leftPosition;
-            float width = 0;
+            float xPos;
+            float[] width = new float[bricksPerLayer];
+
+            xPos = leftPosition;
+
             for (int i = 0; i < bricksPerLayer; i++)
             {
-                width = (minWidth + (i < bricksPerLayer - 1 ? UnityEngine.Random.value * maxWidth : 1 - minWidth)) * MaxBrickWidth(xPos, i);
-                CreateBrick(color, new Vector2(brickDistance + xPos + width / 2, yPosition), width);
-                xPos += width + brickDistance;
+                float xMin = minWidth;
+                float xMax = maxWidth;
+
+                float allBricksDistance = brickDistance * (bricksPerLayer - 1 - i);
+                float allBricksWidth = rightPosition - xPos - allBricksDistance;
+
+                float middleWidth = allBricksWidth / (bricksPerLayer - i);
+                float minMiddleWidth = (minWidth * (bricksPerLayer - i - 1) + allBricksDistance + maxWidth) / (bricksPerLayer - i);
+                float maxMiddleWidth = (maxWidth * (bricksPerLayer - i - 1) + allBricksDistance + minWidth) / (bricksPerLayer - i);
+
+                if (middleWidth > minMiddleWidth)
+                {
+                    if (middleWidth > maxMiddleWidth) 
+                    {
+                        if (i < bricksPerLayer - 1)
+                        {
+                            width[i] = maxWidth;
+                        }
+                        else
+                        {
+                            width[i] = rightPosition - xPos;
+                        }
+                    }
+                    else
+                    {
+                        if (middleWidth > brickWidth)
+                        {
+                            xMax = allBricksWidth - ((bricksPerLayer - i - 1) * minWidth);
+                            if (xMax > maxWidth)
+                                xMax = maxWidth;
+                        }
+                        else
+                        {
+                            xMin = allBricksWidth - ((bricksPerLayer - i - 1) * maxWidth);
+                            if (xMin < minWidth)
+                                xMin = minWidth;
+                        }
+                            
+                        width[i] = (xMin + ((i < bricksPerLayer - 1) ? UnityEngine.Random.value * (xMax - xMin) : maxWidth - xMin));
+                    }
+                        
+                }
+                else
+                {
+                    if(i < bricksPerLayer - 1)
+                    {
+                        width[i] = minWidth;
+                    }
+                    else
+                    {
+                        width[i] = rightPosition - xPos;
+                    }
+                }
+                xPos += width[i] + brickDistance;
+            }
+
+
+
+            xPos = leftPosition;
+            for (int i = 0; i < bricksPerLayer; i++)
+            {
+                var wdt = width[i];
+                CreateBrick(color, new Vector2(brickDistance + xPos + wdt / 2, yPosition), wdt);
+                xPos += wdt + brickDistance;
             }
         }
 
@@ -113,8 +167,8 @@ namespace Shabalin.Breakout
         /// </summary>
         static GameObject CreateBrick(Color color, Vector2 position, float width)
         {
-            
-            UnityEngine.Object prefab = AssetDatabase.LoadAssetAtPath(prefabPath, typeof(GameObject));
+
+            UnityEngine.Object prefab = Camera.main.GetComponent<PrefabHolder>().brickPrefab;
             GameObject brick = GameObject.Instantiate(prefab, position, Quaternion.identity) as GameObject;
 
             brick.transform.localScale = new Vector3(width, height, 1);

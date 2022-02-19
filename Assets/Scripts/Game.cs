@@ -11,6 +11,8 @@ namespace Shabalin.Breakout
         public delegate void RestartEventHandler(object sender, EventArgs e);
         public RestartEventHandler OnRestart;
 
+        PlayerCamera cameraScript;
+
         /// <summary>  Synchronized scores </summary>
         [SyncVar]
         int m_scores = 0;
@@ -24,19 +26,16 @@ namespace Shabalin.Breakout
         const string JsonFileName = "Level.json";
 
         // Start is called before the first frame update
-        void Start()
+        public void Start()
         {
-            if (isServer)
-            {
-                BrickGenerator.PlaceBricksRandom();
-            }
 
 #if DEBUG
             SaveButton.SetActive(true);
             LoadButton.SetActive(true);
             RestartButton.SetActive(true);
 #endif
-
+            cameraScript = Camera.main.GetComponent<PlayerCamera>();
+            
         }
 
         /// <summary>
@@ -48,6 +47,16 @@ namespace Shabalin.Breakout
             BrickGenerator.PlaceBricksRandom();
         }
 
+        /// <summary>
+        /// Start networking game. Should be launched only by the server's client
+        /// </summary>
+        public void StartGame()
+        {
+            if (isServer)
+            {
+                BrickGenerator.PlaceBricksRandom();
+            }
+        }
 
         public void LoadLevelFromJson()
         {
@@ -70,7 +79,7 @@ namespace Shabalin.Breakout
         // Update is called once per frame
         void Update()
         {
-            Camera.main.GetComponent<PlayerCamera>().DispalayScore(m_scores);
+            cameraScript.DispalayScore(m_scores);
         }
 
         /// <summary>

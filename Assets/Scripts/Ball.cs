@@ -10,10 +10,7 @@ namespace Shabalin.Breakout
     public class Ball : NetworkBehaviour
     {
         public const string ballName = "Ball";
-        /// <summary> for constructing a new ball only</summary>
-        const string ballPrefabPath = "Assets/Prefabs/Ball.prefab";
 
-        //start speed of the ball
         const float speed = 4;
         const float minimalSpeed = 0.2f;
 
@@ -28,7 +25,7 @@ namespace Shabalin.Breakout
         /// <summary> link to player's paddle</summary>
         public Paddle paddle;
 
-        public bool isLaunched { get { return m_launched; } }
+        public bool IsLaunched { get { return m_launched; } }
 
         /// <summary> synchronizing position of a ball </summary>
         [SyncVar]
@@ -41,14 +38,21 @@ namespace Shabalin.Breakout
         [SyncVar]
         float gameTime;
 
-        //for fixing loosing speed
+        /// <summary>for fixing loosing speed </summary>
         int frame = 0;
+
+
+        Rigidbody m_rigidbody;
+        public NetworkIdentity networkIdentity;
 
         // Start is called before the first frame update
         void Start()
         {
             Camera.main.GetComponent<Game>().OnRestart += OnRestart;
+
             gameObject.name = ballName;
+            m_rigidbody = GetComponent<Rigidbody>();
+            networkIdentity = GetComponent<NetworkIdentity>();
         }
 
         /// <summary>
@@ -62,7 +66,7 @@ namespace Shabalin.Breakout
                 float dir = direction / 180 * Mathf.PI;
                 velocity = new Vector3(speed * Mathf.Cos(dir), speed * Mathf.Sin(dir));
                 startVelocity = velocity;
-                GetComponent<Rigidbody>().velocity = velocity;
+                m_rigidbody.velocity = velocity;
                 Debug.Log("Direction:" + direction);
                 ChangePosition(transform.position, velocity);
             }
@@ -93,7 +97,7 @@ namespace Shabalin.Breakout
         /// <returns>created ball</returns>
         public static Ball CreateBallForPlayer(Paddle player)
         {
-            GameObject prefab = AssetDatabase.LoadAssetAtPath(ballPrefabPath, typeof(GameObject)) as GameObject;
+            GameObject prefab = Camera.main.GetComponent<PrefabHolder>().ballPrefab;
             var ballObj = Instantiate(prefab, Vector2.zero, Quaternion.identity) as GameObject;
             Ball ball = ballObj.GetComponent<Ball>();
 
@@ -127,8 +131,7 @@ namespace Shabalin.Breakout
             {
 
                 //fixing flying horizontal or vertical
-                var rig = GetComponent<Rigidbody>();
-                vel = rig.velocity;
+                vel = m_rigidbody.velocity;
 
                 if (startVelocity.magnitude > 0)
                 {
@@ -173,11 +176,11 @@ namespace Shabalin.Breakout
                     }
                 }
 
-                GetComponent<Rigidbody>().velocity = vel;
+                m_rigidbody.velocity = vel;
             }
             transform.position = pos;
 
-            GetComponent<NetworkIdentity>().AssignClientAuthority(Paddle.serverPlayer.GetComponent<NetworkIdentity>().connectionToClient);
+            networkIdentity.AssignClientAuthority(Paddle.serverPlayer.networkIdentity.connectionToClient);
             ChangePosition(pos, vel);
         }
 
@@ -215,9 +218,8 @@ namespace Shabalin.Breakout
         /// </summary>
         void ChangeAutority()
         {
-            var network = GetComponent<NetworkIdentity>();
-            network.RemoveClientAuthority();
-            network.AssignClientAuthority(Paddle.serverPlayer.GetComponent<NetworkIdentity>().connectionToClient);
+            networkIdentity.RemoveClientAuthority();
+            networkIdentity.AssignClientAuthority(Paddle.serverPlayer.networkIdentity.connectionToClient);
             Debug.Log("Authorized");
         }
 
@@ -229,31 +231,31 @@ namespace Shabalin.Breakout
             if (isServer && paddle.isServer)
             {
                 m_launched = paddle.isBallLaunched;
-                var network = GetComponent<NetworkIdentity>();
-                if (network.connectionToClient != Paddle.serverPlayer.GetComponent<NetworkIdentity>().connectionToClient)
+                var network = networkIdentity;
+                if (network.connectionToClient != Paddle.serverPlayer.networkIdentity.connectionToClient)
                 {
                     ChangeAutority();
                 }
                 else
                 {
-                    if (isLaunched)
+                    if (IsLaunched)
                         FixingMovement();
                     else
                     {
                         StickToPaddle();
-                        ChangePosition(paddle.transform.position, GetComponent<Rigidbody>().velocity);
+                        ChangePosition(paddle.transform.position, m_rigidbody.velocity);
                     }
                 }
             }
             else
             {
-                if (isLaunched || paddle == null)
+                if (IsLaunched || paddle == null)
                 {
                     float time = Game.CalcTime();
                     if (gameTime + 0.03 > time) //1 / 60fps  ~ 0.03 - should be applied exactly after received, no more then two frames in a row
                     {
                         transform.position = position;
-                        GetComponent<Rigidbody>().velocity = velocity;
+                        m_rigidbody.velocity = velocity;
                     }
                 }
                 else

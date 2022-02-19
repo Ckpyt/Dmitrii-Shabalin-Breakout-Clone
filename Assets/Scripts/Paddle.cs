@@ -12,16 +12,11 @@ namespace Shabalin.Breakout
     /// </summary>
     public class Paddle : NetworkBehaviour
     {
-
-        const string PaddlePrefabPath = "Assets/Prefabs/Paddle.prefab";
         /// <summary> current player on the client </summary>
         public static Paddle serverPlayer = null;
 
         /// <summary> the speed of a paddle </summary>
         const float speed = 5;
-
-        /// <summary> left and right wall's position </summary>
-        const float xBorder = 5.7f;
 
         [SyncVar]
         public Ball m_ball;
@@ -43,19 +38,44 @@ namespace Shabalin.Breakout
         [SyncVar]
         float gameTime;
 
+        public NetworkIdentity networkIdentity;
+        Rigidbody m_rigidbody;
+
+        /// <summary> left and right wall's position </summary>
+        float Xleft, Xright;
+
         // Start is called before the first frame update
         void Start()
         {
             paddleYcoord = transform.position.y;
+            m_rigidbody = GetComponent<Rigidbody>();
 
             Camera.main.GetComponent<Game>().OnRestart += OnRestart;
+            networkIdentity = GetComponent<NetworkIdentity>();
 
+            CalcBorders();
             if (isServer)
             {
-                if(serverPlayer == null) serverPlayer = this;
+                if(connectionToClient.connectionId == 0)
+                    Camera.main.GetComponent<Game>().StartGame();
+
+                if (serverPlayer == null) serverPlayer = this;
                 m_ball = Ball.CreateBallForPlayer(this);
                 m_ball.paddle = this;
             }
+            
+        }
+
+        void CalcBorders()
+        {
+            var camerScript = Camera.main.GetComponent<PlayerCamera>();
+            var size = GetComponent<BoxCollider>().bounds.size;
+            var leftSize = camerScript.leftBorder.GetComponent<BoxCollider>().bounds.size;
+            var leftPos = camerScript.leftBorder.transform.position;
+            var rightSize = camerScript.rightBorder.GetComponent<BoxCollider>().bounds.size;
+            var rightPos = camerScript.rightBorder.transform.position;
+            Xright = rightPos.x - rightSize.x / 2f - size.x / 2f - 0.1f;
+            Xleft = leftPos.x + leftSize.x / 2f + size.x / 2f + 0.1f;
         }
 
         /// <summary>
@@ -69,8 +89,10 @@ namespace Shabalin.Breakout
             int count = 0;
             var pos = transform.position;
 
-            if (pos.y > -1)
-                pos.y = -4f;
+            float middle = (BrickGenerator.bottomPosition + Camera.main.GetComponent<PlayerCamera>().bottomBorder.transform.position.y) / 2;
+
+            if (pos.y > BrickGenerator.bottomPosition -1)
+                pos.y = middle;
             transform.position = pos;
 
             if (paddles.Length > 1) //sometimes, paddles could be in one spawn spot;
@@ -79,7 +101,7 @@ namespace Shabalin.Breakout
                         count++;
 
             if (count > 1)
-                pos = SwitchPlayersSpawn();
+                pos = SwitchPlayersSpawn(middle);
 
             paddleYcoord = pos.y;
         }
@@ -87,10 +109,10 @@ namespace Shabalin.Breakout
         /// <summary>
         /// choosing another height for a player's paddle
         /// </summary>
-        Vector3 SwitchPlayersSpawn()
+        Vector3 SwitchPlayersSpawn(float middle)
         {
             var pos = transform.position;
-            if (pos.y < -3.5)
+            if (pos.y < middle)
                 pos.y += 1;
             else
                 pos.y -= 1;
@@ -147,16 +169,16 @@ namespace Shabalin.Breakout
             float curSpeed = 0;
             var pos = transform.position;
 
-            if (Input.GetKeyDown(KeyCode.Space) && m_ball.isLaunched == false)
+            if (Input.GetKeyDown(KeyCode.Space) && m_ball.IsLaunched == false)
             {
                 LaunchBall();
             }
 
-            if (pos.x > -xBorder && Input.GetKey(KeyCode.A)) curSpeed = -speed;
-            if (pos.x < xBorder && Input.GetKey(KeyCode.D)) curSpeed = speed;
+            if (pos.x > Xleft && Input.GetKey(KeyCode.A)) curSpeed = -speed;
+            if (pos.x < Xright && Input.GetKey(KeyCode.D)) curSpeed = speed;
             var vel = new Vector3(curSpeed, 0);
             GetComponent<Rigidbody>().velocity = vel;
-
+            
             ChangePosition(pos, vel);
         }
 
@@ -222,7 +244,7 @@ namespace Shabalin.Breakout
                 if (gameTime + 0.03 > time) //1 / 60fps  ~ 0.03 - should be applied exactly after received, no more then two frames in a row
                 {
                     transform.position = position;
-                    GetComponent<Rigidbody>().velocity = velocity;
+                    m_rigidbody.velocity = velocity;
                 }
             }
             FixMovementAndRotation();
