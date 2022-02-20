@@ -42,6 +42,49 @@ namespace Shabalin.Breakout
             public LayerSerializale[] layers;
         }
 
+        /// <summary>
+        /// For sorting width and some math operations
+        /// </summary>
+        private class bricks : IComparable
+        {
+            public float width;
+            public int pos;
+
+            public virtual int CompareTo(object obj)
+            {
+                return (this < (obj as bricks)) ? 1 : -1;
+            }
+
+            public static bool operator <(bricks left, bricks right)
+            {
+                return left.width > right.width;
+            }
+
+            public static bool operator >(bricks left, bricks right)
+            {
+                return !(left < right);
+            }
+        }
+        /// <summary>
+        /// For sorting by position
+        /// </summary>
+        private class bricksByPos : bricks{
+
+            public override int CompareTo(object obj)
+            {
+                return (this < (obj as bricksByPos)) ? 1 : -1;
+            }
+
+            public static bool operator <(bricksByPos left, bricksByPos right)
+            {
+                return left.pos > right.pos;
+            }
+            public static bool operator >(bricksByPos left, bricksByPos right)
+            {
+                return !(left < right);
+            }
+        };
+
         #endregion
 
         const string brickName = "Brick";
@@ -75,9 +118,62 @@ namespace Shabalin.Breakout
             float yPos = bottomPosition;
             for (int i = 0; i < maxLayers; i++)
             {
-                LayLayerRandom(yPos, DefinedColors.GetColor((Colors)i));
+                LayLayerRandomProp(yPos, DefinedColors.GetColor((Colors)i));
                 yPos += height;
             }
+        }
+
+
+        /// <summary>
+        /// place bricks with random width in one layer
+        /// The total summ of all bricks proportions shrinks to required width.
+        /// </summary>
+        /// <param name="yPosition"> layer's height </param>
+        /// <param name="color"> layer's color </param>
+        static void LayLayerRandomProp(float yPosition, Color color)
+        {
+
+            float xPos;
+            var brickByPos = new bricksByPos[bricksPerLayer];
+            bricks[] allBricks = brickByPos;
+
+            float width = 0;
+            for (int i = 0; i < bricksPerLayer; i++)
+            {
+                allBricks[i] = new bricksByPos();
+                allBricks[i].pos = i;
+                allBricks[i].width = UnityEngine.Random.value * (maxWidth - minWidth);
+                width += allBricks[i].width;
+            }
+
+            float widthMul = (rightPosition - leftPosition - brickDistance * (bricksPerLayer - 1) - minWidth * bricksPerLayer) / (width);
+            foreach (var wdt in allBricks)
+                wdt.width *= widthMul;
+
+            Array.Sort(allBricks);
+            do
+            {
+                if(allBricks[allBricks.Length - 1].width >= maxWidth - minWidth)
+                {
+                    float summ = UnityEngine.Random.value * (maxWidth - allBricks[0].width);
+                    allBricks[0].width += summ;
+                    allBricks.Last().width -= summ;
+                }
+                Array.Sort(allBricks);
+            } while (allBricks[allBricks.Length - 1].width >= maxWidth);
+
+
+            
+            Array.Sort(brickByPos);
+
+            xPos = leftPosition;
+            for (int i = 0; i < bricksPerLayer; i++)
+            {
+                var wdt = brickByPos[i].width;
+                CreateBrick(color, new Vector2(brickDistance + xPos + wdt / 2, yPosition), wdt + minWidth);
+                xPos += wdt + brickDistance + minWidth;
+            }
+
         }
 
         /// <summary>
