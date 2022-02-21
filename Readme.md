@@ -6,4 +6,6 @@ https://docs.microsoft.com/en-us/dotnet/standard/design-guidelines/naming-guidel
 About the project:
 
 1. TaskTracker.docx - all the test task split into small tasks and this document is for tracking them.
-2. Mirror - mirror frmework.
+2. Mirror - mirror framework.
+
+![](Screenshot.png)
